@@ -123,7 +123,7 @@ describe('Game Logic', () => {
       expect(newState.snake).toEqual(state.snake);
     });
 
-    it('wraps around in passthrough mode', () => {
+    it('wraps around right edge in passthrough mode', () => {
       const state = createInitialState('passthrough');
       state.snake = [{ x: GRID_SIZE - 1, y: 5 }];
       state.direction = 'right';
@@ -134,11 +134,74 @@ describe('Game Logic', () => {
       expect(newState.isGameOver).toBe(false);
     });
 
-    it('ends game on wall collision in walls mode', () => {
+    it('wraps around left edge in passthrough mode', () => {
+      const state = createInitialState('passthrough');
+      state.snake = [{ x: 0, y: 5 }];
+      state.direction = 'left';
+      state.nextDirection = 'left';
+      
+      const newState = moveSnake(state);
+      expect(newState.snake[0].x).toBe(GRID_SIZE - 1);
+      expect(newState.isGameOver).toBe(false);
+    });
+
+    it('wraps around top edge in passthrough mode', () => {
+      const state = createInitialState('passthrough');
+      state.snake = [{ x: 5, y: 0 }];
+      state.direction = 'up';
+      state.nextDirection = 'up';
+      
+      const newState = moveSnake(state);
+      expect(newState.snake[0].y).toBe(GRID_SIZE - 1);
+      expect(newState.isGameOver).toBe(false);
+    });
+
+    it('wraps around bottom edge in passthrough mode', () => {
+      const state = createInitialState('passthrough');
+      state.snake = [{ x: 5, y: GRID_SIZE - 1 }];
+      state.direction = 'down';
+      state.nextDirection = 'down';
+      
+      const newState = moveSnake(state);
+      expect(newState.snake[0].y).toBe(0);
+      expect(newState.isGameOver).toBe(false);
+    });
+
+    it('ends game on right wall collision in walls mode', () => {
       const state = createInitialState('walls');
       state.snake = [{ x: GRID_SIZE - 1, y: 5 }];
       state.direction = 'right';
       state.nextDirection = 'right';
+      
+      const newState = moveSnake(state);
+      expect(newState.isGameOver).toBe(true);
+    });
+
+    it('ends game on left wall collision in walls mode', () => {
+      const state = createInitialState('walls');
+      state.snake = [{ x: 0, y: 5 }];
+      state.direction = 'left';
+      state.nextDirection = 'left';
+      
+      const newState = moveSnake(state);
+      expect(newState.isGameOver).toBe(true);
+    });
+
+    it('ends game on top wall collision in walls mode', () => {
+      const state = createInitialState('walls');
+      state.snake = [{ x: 5, y: 0 }];
+      state.direction = 'up';
+      state.nextDirection = 'up';
+      
+      const newState = moveSnake(state);
+      expect(newState.isGameOver).toBe(true);
+    });
+
+    it('ends game on bottom wall collision in walls mode', () => {
+      const state = createInitialState('walls');
+      state.snake = [{ x: 5, y: GRID_SIZE - 1 }];
+      state.direction = 'down';
+      state.nextDirection = 'down';
       
       const newState = moveSnake(state);
       expect(newState.isGameOver).toBe(true);
@@ -286,6 +349,110 @@ describe('Game Logic', () => {
         // Should not go left into the wall
         expect(move).not.toBe('left');
       }
+    });
+
+    it('avoids self collision', () => {
+      const state = createInitialState('passthrough');
+      // Snake going right with body blocking up
+      state.snake = [
+        { x: 5, y: 5 },
+        { x: 4, y: 5 },
+        { x: 4, y: 4 },
+        { x: 5, y: 4 },
+      ];
+      state.direction = 'right';
+      
+      for (let i = 0; i < 20; i++) {
+        const move = calculateAIMove(state);
+        // Should not go up into its own body
+        expect(move).not.toBe('up');
+      }
+    });
+
+    it('moves toward food when path is clear', () => {
+      const state = createInitialState('passthrough');
+      state.snake = [{ x: 5, y: 5 }];
+      state.food = { x: 8, y: 5 };
+      state.direction = 'right';
+      
+      // Most moves should be toward food (right)
+      let rightCount = 0;
+      for (let i = 0; i < 50; i++) {
+        if (calculateAIMove(state) === 'right') rightCount++;
+      }
+      // Should go right most of the time (accounting for 10% randomness)
+      expect(rightCount).toBeGreaterThan(30);
+    });
+  });
+
+  describe('movement in all directions', () => {
+    it('moves up correctly', () => {
+      const state = createInitialState('passthrough');
+      state.snake = [{ x: 5, y: 5 }, { x: 5, y: 6 }];
+      state.direction = 'up';
+      state.nextDirection = 'up';
+      
+      const newState = moveSnake(state);
+      expect(newState.snake[0]).toEqual({ x: 5, y: 4 });
+    });
+
+    it('moves down correctly', () => {
+      const state = createInitialState('passthrough');
+      state.snake = [{ x: 5, y: 5 }, { x: 5, y: 4 }];
+      state.direction = 'down';
+      state.nextDirection = 'down';
+      
+      const newState = moveSnake(state);
+      expect(newState.snake[0]).toEqual({ x: 5, y: 6 });
+    });
+
+    it('moves left correctly', () => {
+      const state = createInitialState('passthrough');
+      state.snake = [{ x: 5, y: 5 }, { x: 6, y: 5 }];
+      state.direction = 'left';
+      state.nextDirection = 'left';
+      
+      const newState = moveSnake(state);
+      expect(newState.snake[0]).toEqual({ x: 4, y: 5 });
+    });
+
+    it('moves right correctly', () => {
+      const state = createInitialState('passthrough');
+      state.snake = [{ x: 5, y: 5 }, { x: 4, y: 5 }];
+      state.direction = 'right';
+      state.nextDirection = 'right';
+      
+      const newState = moveSnake(state);
+      expect(newState.snake[0]).toEqual({ x: 6, y: 5 });
+    });
+  });
+
+  describe('snake tail behavior', () => {
+    it('tail follows head when not eating', () => {
+      const state = createInitialState('passthrough');
+      state.snake = [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }];
+      state.direction = 'right';
+      state.nextDirection = 'right';
+      
+      const newState = moveSnake(state);
+      expect(newState.snake).toEqual([
+        { x: 6, y: 5 },
+        { x: 5, y: 5 },
+        { x: 4, y: 5 },
+      ]);
+    });
+
+    it('maintains length when not eating', () => {
+      const state = createInitialState('passthrough');
+      const initialLength = state.snake.length;
+      
+      // Move several times without eating
+      let currentState = state;
+      for (let i = 0; i < 5; i++) {
+        currentState = moveSnake(currentState);
+      }
+      
+      expect(currentState.snake.length).toBe(initialLength);
     });
   });
 });

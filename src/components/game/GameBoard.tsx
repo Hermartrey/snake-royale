@@ -31,7 +31,7 @@ export function GameBoard({ gameState, cellSize = 20, isSpectator = false }: Gam
           <div
             key={index}
             className={cn(
-              "absolute rounded-sm transition-all duration-75",
+              "absolute rounded-sm",
               index === 0 
                 ? "bg-primary shadow-[0_0_10px_hsl(var(--primary))]" 
                 : "bg-primary/80"
