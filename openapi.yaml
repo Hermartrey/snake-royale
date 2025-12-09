@@ -1,0 +1,358 @@
+openapi: 3.0.0
+info:
+  title: Snake Royale API
+  description: API for the Snake Royale game backend, derived from frontend mock API.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local Development Server
+
+paths:
+  /auth/login:
+    post:
+      summary: Login a user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+                  error:
+                    type: string
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+
+  /auth/signup:
+    post:
+      summary: Register a new user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - username
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+                  error:
+                    type: string
+        '400':
+          description: Registration failed (e.g., email exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+
+  /auth/logout:
+    post:
+      summary: Logout the current user
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /auth/me:
+    get:
+      summary: Get current authenticated user
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: Current user details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Not authenticated
+        '204':
+          description: No active session (if returning null)
+
+  /leaderboard:
+    get:
+      summary: Get leaderboard entries
+      tags:
+        - Leaderboard
+      parameters:
+        - in: query
+          name: mode
+          schema:
+            type: string
+            enum: [passthrough, walls]
+          description: Filter by game mode
+      responses:
+        '200':
+          description: List of leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaderboardEntry'
+
+    post:
+      summary: Submit a new score
+      tags:
+        - Leaderboard
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - score
+                - mode
+              properties:
+                score:
+                  type: integer
+                mode:
+                  type: string
+                  enum: [passthrough, walls]
+      responses:
+        '200':
+          description: Score submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  rank:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /games/active:
+    get:
+      summary: Get list of active games (for spectator mode)
+      tags:
+        - Spectator
+      responses:
+        '200':
+          description: List of active games
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActiveGame'
+
+  /games/{gameId}:
+    get:
+      summary: Watch a specific game
+      tags:
+        - Spectator
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Game state details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveGame'
+        '404':
+          description: Game not found
+
+  /games/save:
+    post:
+      summary: Save current game state
+      tags:
+        - Game
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                score:
+                  type: integer
+                mode:
+                  type: string
+                  enum: [passthrough, walls]
+      responses:
+        '200':
+          description: Game saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - username
+        - email
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        score:
+          type: integer
+        mode:
+          type: string
+          enum: [passthrough, walls]
+        date:
+          type: string
+          format: date-time
+      required:
+        - id
+        - username
+        - score
+        - mode
+
+    ActiveGame:
+      type: object
+      properties:
+        id:
+          type: string
+        playerId:
+          type: string
+        playerName:
+          type: string
+        score:
+          type: integer
+        mode:
+          type: string
+          enum: [passthrough, walls]
+        snake:
+          type: array
+          items:
+            type: object
+            properties:
+              x:
+                type: integer
+              y:
+                type: integer
+        food:
+          type: object
+          properties:
+            x:
+              type: integer
+            y:
+              type: integer
+        direction:
+          type: string
+          enum: [up, down, left, right]
+        isActive:
+          type: boolean
+      required:
+        - id
+        - playerId
+        - playerName
+        - score
+        - mode
+        - snake
+        - food
+        - direction
+        - isActive
