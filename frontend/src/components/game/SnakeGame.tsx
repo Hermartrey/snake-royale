@@ -67,6 +67,9 @@ export function SnakeGame({ initialMode = 'passthrough' }: SnakeGameProps) {
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+
       const directionMap: Record<string, Direction> = {
         ArrowUp: 'up',
         ArrowDown: 'down',

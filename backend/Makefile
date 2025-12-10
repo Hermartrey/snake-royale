@@ -1,10 +1,13 @@
 .PHONY: run test install clean
 
 run:
-	uv run uvicorn src.main:app --reload
+	uv run --active uvicorn src.main:app --reload
 
 test:
-	uv run pytest
+	uv run --active pytest tests
+
+test-integration:
+	uv run --active pytest tests_integration
 
 install:
 	uv sync

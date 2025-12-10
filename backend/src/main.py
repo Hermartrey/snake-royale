@@ -1,8 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from .api.routes import router
+from .db.session import engine
+from .db.base import Base
 
-app = FastAPI(title="Snake Royale API", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create tables on startup
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+app = FastAPI(title="Snake Royale API", version="1.0.0", lifespan=lifespan)
 
 # CORS Configuration
 # In a real app, strict allow_origins is recommended

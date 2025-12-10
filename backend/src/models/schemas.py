@@ -9,7 +9,7 @@ class User(BaseModel):
     email: EmailStr
     created_at: datetime = Field(alias="createdAt")
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -26,6 +26,8 @@ class LeaderboardEntry(BaseModel):
     score: int
     mode: Literal['passthrough', 'walls']
     date: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 class ScoreSubmission(BaseModel):
     score: int
@@ -46,7 +48,7 @@ class ActiveGame(BaseModel):
     direction: Literal['up', 'down', 'left', 'right']
     is_active: bool = Field(alias="isActive")
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
 class GameStateSave(BaseModel):
     score: int
