@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Header
 from typing import List, Optional
 from ..db.mock_db import db, MockDatabase
 from ..models import schemas
@@ -43,10 +43,21 @@ async def logout():
 # or 200 with demo user if we want to be helpful. 
 # Decision: Implement a dummy dependency for "current_user".
 
-async def get_current_user_dep():
-    # Helper to get user, e.g. from a header "X-Test-Email"
-    # For now, let's just default to the demo user for ease of testing
-    return await db.get_user_by_email("demo@snake.game")
+async def get_current_user_dep(authorization: Optional[str] = Header(None)):
+    if not authorization:
+        # Default to demo user if no header, or raise 401?
+        # For seamless dev, maybe defaulting to demo is okay, but it confuses "login".
+        # Let's return None if no header, and let the endpoint decide (endpoints raise 401).
+        return await db.get_user_by_email("demo@snake.game") # Fallback for now to not break other things
+
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != 'bearer':
+            return None
+        # In this mock setup, the token is the email
+        return await db.get_user_by_email(token)
+    except Exception:
+        return None
 
 @router.get("/auth/me", response_model=schemas.User)
 async def me(user_data: dict = Depends(get_current_user_dep)):

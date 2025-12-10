@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { leaderboardApi, type LeaderboardEntry } from '@/api/mockApi';
+import { leaderboardApi, type LeaderboardEntry } from '@/api/client';
 import { Trophy, Medal, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

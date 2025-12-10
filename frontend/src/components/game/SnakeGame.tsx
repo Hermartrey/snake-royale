@@ -12,7 +12,7 @@ import {
   type GameMode,
 } from '@/game/gameLogic';
 import { useAuth } from '@/contexts/AuthContext';
-import { leaderboardApi } from '@/api/mockApi';
+import { leaderboardApi } from '@/api/client';
 import { toast } from 'sonner';
 
 interface SnakeGameProps {

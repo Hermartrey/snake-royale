@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GameBoard } from '@/components/game/GameBoard';
-import { spectatorApi, type ActiveGame } from '@/api/mockApi';
+import { spectatorApi, type ActiveGame } from '@/api/client';
 import {
   createInitialState,
   moveSnake,
