@@ -4,8 +4,6 @@ services:
     name: snake-royale
     env: docker
     plan: free
-    dockerFilePath: ./Dockerfile
-    dockerContext: .
     numInstances: 1
     healthCheckPath: /
     envVars:
