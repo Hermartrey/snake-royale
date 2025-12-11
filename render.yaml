@@ -7,7 +7,7 @@ services:
     dockerFilePath: ./Dockerfile
     dockerContext: .
     numInstances: 1
-    healthCheckPath: /api/
+    healthCheckPath: /
     envVars:
       - key: DATABASE_URL
         fromDatabase:
