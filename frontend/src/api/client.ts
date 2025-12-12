@@ -68,6 +68,13 @@ export const authApi = {
                 },
                 body: JSON.stringify({ email, password }),
             });
+
+            if (!response.ok) {
+                // Handle HTTP error responses (401, 400, etc.)
+                const errorData = await response.json().catch(() => ({ detail: 'Login failed' }));
+                return { success: false, error: errorData.detail || errorData.error || 'Login failed' };
+            }
+
             const data = await response.json();
             if (data.success && data.user) {
                 // Mock token behavior: store email as token
@@ -89,6 +96,13 @@ export const authApi = {
                 },
                 body: JSON.stringify({ email, username, password }),
             });
+
+            if (!response.ok) {
+                // Handle HTTP error responses (400, etc.)
+                const errorData = await response.json().catch(() => ({ detail: 'Signup failed' }));
+                return { success: false, error: errorData.detail || errorData.error || 'Signup failed' };
+            }
+
             const data = await response.json();
             if (data.success && data.user) {
                 localStorage.setItem(STORAGE_KEY, data.user.email);
