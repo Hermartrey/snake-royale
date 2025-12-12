@@ -19,8 +19,9 @@ async def signup(
 ):
     """Create a new user account"""
     try:
-        await repo.create_user(user_data)
-        return {"success": True}
+        db_user = await repo.create_user(user_data)
+        user = schemas.User.model_validate(db_user)
+        return {"success": True, "user": user}
     except ValueError as e:
         # Email already registered
         raise HTTPException(status_code=409, detail=str(e))
@@ -32,16 +33,17 @@ async def login(
     credentials: schemas.UserLogin,
     repo: DatabaseRepository = Depends(get_repository)
 ):
-    """Authenticate user and return success"""
-    user = await repo.get_user_by_email(credentials.email)
+    """Authenticate user and return success with user data"""
+    db_user = await repo.get_user_by_email(credentials.email)
     
-    if not user:
+    if not db_user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    if not verify_password(credentials.password, user.password):
+    if not verify_password(credentials.password, db_user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    return {"success": True}
+    user = schemas.User.model_validate(db_user)
+    return {"success": True, "user": user}
 
 
 @router.post("/auth/logout")
