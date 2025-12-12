@@ -5,7 +5,7 @@ from httpx import AsyncClient
 async def test_read_main(client: AsyncClient):
     response = await client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Welcome to Snake Royale API"}
+    assert response.json() == {"message": "Welcome to Snake Royale API (Frontend not built/served)"}
 
 @pytest.mark.asyncio
 async def test_auth_flow(client: AsyncClient):
