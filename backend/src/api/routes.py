@@ -1,32 +1,48 @@
-from fastapi import APIRouter, HTTPException, Depends, status, Header
-from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional, List
 from ..db.session import get_db
 from ..db.repository import DatabaseRepository
 from ..models import schemas
+from ..utils.password import hash_password, verify_password
 
 router = APIRouter()
 
 def get_repository(session: AsyncSession = Depends(get_db)) -> DatabaseRepository:
     return DatabaseRepository(session)
 
-# Auth Endpoints
+# Authentication Endpoints
+@router.post("/auth/signup", status_code=201, response_model=dict)
+async def signup(
+    user_data: schemas.UserCreate,
+    repo: DatabaseRepository = Depends(get_repository)
+):
+    """Create a new user account"""
+    try:
+        await repo.create_user(user_data)
+        return {"success": True}
+    except ValueError as e:
+        # Email already registered
+        raise HTTPException(status_code=409, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Failed to create user")
+
 @router.post("/auth/login", response_model=dict)
-async def login(credentials: schemas.UserLogin, repo: DatabaseRepository = Depends(get_repository)):
+async def login(
+    credentials: schemas.UserLogin,
+    repo: DatabaseRepository = Depends(get_repository)
+):
+    """Authenticate user and return success"""
     user = await repo.get_user_by_email(credentials.email)
-    if not user or user.password != credentials.password:
+    
+    if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    # In a real app, we'd generate a JWT here
-    return {"success": True, "user": schemas.User.model_validate(user)}
+    if not verify_password(credentials.password, user.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    return {"success": True}
 
-@router.post("/auth/signup", response_model=dict, status_code=201)
-async def signup(user_details: schemas.UserCreate, repo: DatabaseRepository = Depends(get_repository)):
-    try:
-        user = await repo.create_user(user_details)
-        return {"success": True, "user": schemas.User.model_validate(user)}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/auth/logout")
 async def logout():

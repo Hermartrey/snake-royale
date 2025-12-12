@@ -2,6 +2,7 @@ from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..models import db as models
 from ..models import schemas
+from ..utils.password import hash_password
 from datetime import datetime
 
 class DatabaseRepository:
@@ -21,7 +22,7 @@ class DatabaseRepository:
         new_user = models.User(
             username=user_create.username,
             email=user_create.email,
-            password=user_create.password # TODO: Hash password
+            password=hash_password(user_create.password)
         )
         self.session.add(new_user)
         try:
